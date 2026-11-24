@@ -1,0 +1,61 @@
+services:
+
+  minio:
+    image: minio/minio
+    container_name: minio
+
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+
+    command: server /data --console-address ":9001"
+
+    volumes:
+      - minio_data:/data
+
+
+  airflow:
+    image: apache/airflow:2.9.1
+    container_name: airflow
+
+    depends_on:
+      - minio
+
+    ports:
+      - "8080:8080"
+
+    environment:
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY}
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__EXECUTOR: SequentialExecutor
+
+      # ✅ FIX IMPORTANT (logs + UI)
+      AIRFLOW__WEBSERVER__BASE_URL: http://localhost:8080
+      AIRFLOW__LOGGING__BASE_LOG_FOLDER: /opt/airflow/logs
+      AIRFLOW__LOGGING__REMOTE_LOGGING: "False"
+
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./:/opt/airflow/project
+
+    command: >
+      bash -c "
+      airflow db migrate &&
+      airflow users create
+      --username admin
+      --password admin
+      --firstname admin
+      --lastname admin
+      --role Admin
+      --email admin@example.com || true &&
+      airflow scheduler & airflow webserver
+      "
+
+volumes:
+  minio_data:

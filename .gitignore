@@ -1,0 +1,21 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Airflow (générés à l'exécution)
+airflow/logs/*
+!airflow/logs/.gitkeep
+airflow.db
+airflow.cfg
+webserver_config.py
+
+# Divers
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
